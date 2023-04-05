@@ -13,7 +13,7 @@ public class RetrievalAgent : MonoBehaviour
     public BehaviorState State = BehaviorState.Leave;
 
     [Header("Search Settings")]
-    [SerializeField] private float searchRange;
+    [SerializeField] private Vector2 searchRangeMinMax = new Vector2(10f, 20f);
     [SerializeField] private float searchRate;
     [SerializeField] private float searchRadius;
     [SerializeField] private Transform home;
@@ -36,21 +36,6 @@ public class RetrievalAgent : MonoBehaviour
 
         //get random destination outside of home area
         agent.destination = new Vector3(Random.Range(-15f, 15f), 1f, Random.Range(-15f, 15f));
-
-        //setup agent based on type
-        switch(agentType)
-        {
-            case AgentType.Yellow:
-                numEnemiesToFlee = 1;
-                break;
-            case AgentType.Red:
-                numEnemiesToFlee = -1;
-
-                break;
-            case AgentType.Blue:
-                numEnemiesToFlee = 2;
-                break;
-        }
     }
 
     private void Update()
@@ -58,7 +43,8 @@ public class RetrievalAgent : MonoBehaviour
         switch(State)
         {
             case BehaviorState.Leave:
-                if(Vector3.Distance(agent.nextPosition, agent.destination) <= 1f) State = BehaviorState.Search;
+                if(Vector3.Distance(transform.position, agent.destination) <= 1f) 
+                    State = BehaviorState.Search;
                 break;
             case BehaviorState.Search: 
                 Search();
@@ -68,7 +54,7 @@ public class RetrievalAgent : MonoBehaviour
                 break;
             case BehaviorState.Chase:
                 agent.destination = target.position;
-                if(Vector3.Distance(agent.nextPosition, agent.destination) <= 1f)
+                if(Vector3.Distance(transform.position, agent.destination) <= 1f)
                 {
                     RetrievalAgent otherAgent = target.GetComponent<RetrievalAgent>();
                     if(otherAgent.holdingBlob)
@@ -84,6 +70,11 @@ public class RetrievalAgent : MonoBehaviour
                         State = BehaviorState.Leave;
                     }
                 }
+                if(Vector3.Distance(agent.destination, target.GetComponent<RetrievalAgent>().home.position) < 5f)
+                {
+                    agent.destination = home.position;
+                    State = BehaviorState.Return;
+                }
                 break;
             case BehaviorState.Flee:
                 if(enemies.Count < numEnemiesToFlee)
@@ -95,7 +86,7 @@ public class RetrievalAgent : MonoBehaviour
                 else agent.destination = -10 * (enemies[1].transform.position - agent.nextPosition);
                 break;
             case BehaviorState.Return:
-                if(Vector3.Distance(agent.nextPosition, home.position) <= 1f)
+                if(Vector3.Distance(transform.position, home.position) <= 1f)
                 {
                     //drop off blob if holding one
                     DropBlob();
@@ -116,7 +107,7 @@ public class RetrievalAgent : MonoBehaviour
             searchCooldown = searchRate;
 
             //set new search pos
-            Vector2 dir = Random.insideUnitCircle * Random.Range(0, searchRange);
+            Vector2 dir = Random.insideUnitCircle * Random.Range(searchRangeMinMax.x, searchRangeMinMax.y);
             agent.destination = transform.position + new Vector3(dir.x, 0, dir.y);
         }
         else searchCooldown -= Time.deltaTime;
@@ -142,10 +133,11 @@ public class RetrievalAgent : MonoBehaviour
     {
         if(blobToGrab != null)
         {
+            blobToGrab.GetComponent<Rigidbody>().isKinematic = false;
             blobToGrab.SetParent(null);
             blobToGrab = null;
             holdingBlob = false;
-            blobToGrab.GetComponent<Rigidbody>().isKinematic = false;
+            
         }
         return blobToGrab;
     }
@@ -171,9 +163,16 @@ public class RetrievalAgent : MonoBehaviour
             }
         }
         
-        if(other.CompareTag("Blob") && !holdingBlob)
+        if(other.CompareTag("Blob") && State != BehaviorState.Grab)
         {
             blobToGrab = other.transform;
+
+            //ignore blob if already dropped off at home
+            if(Vector3.Distance(blobToGrab.position, home.position) < 3f)
+            {
+                blobToGrab = null;
+                return;
+            }
             agent.destination = blobToGrab.position;
             State = BehaviorState.Grab;
         }
