@@ -4,13 +4,18 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class RetrievalAgent : MonoBehaviour
+public class StealingAgent : MonoBehaviour
 {
-    public enum BehaviorState { Leave, Search, Grab, Return };
+    public enum BehaviorState { Leave, Search, Grab, Steal, Return };
 
     public BehaviorState State = BehaviorState.Leave;
 
     public HouseSpawner houseSpawner;
+
+    [Header("Steal Settings")]
+    public List<HouseSpawner> enemyHouses = new List<HouseSpawner>();
+    [SerializeField] private GameObject blobPrefab;
+    private HouseSpawner targetHouse = null;
 
     [Header("Search Settings")]
     public Transform home;
@@ -22,6 +27,7 @@ public class RetrievalAgent : MonoBehaviour
     private float searchCooldown = 0f;
     private Transform blobToGrab = null;
     private bool holdingBlob = false;
+    private int searchCount = 0;
     
     private void Start()
     {
@@ -44,6 +50,33 @@ public class RetrievalAgent : MonoBehaviour
             case BehaviorState.Grab:
                 Grab();
                 break;
+            case BehaviorState.Steal:
+                //if house has no more blobs to steal, go back to searching
+                if(targetHouse.score <= 0)
+                {
+                    //update state to search for more blobs
+                    agent.destination = new Vector3(Random.Range(-15f, 15f), 1f, Random.Range(-15f, 15f));
+                    State = BehaviorState.Leave;
+                }
+
+                //steal a blob from the target house upon reaching it
+                if(Vector3.Distance(agent.nextPosition, agent.destination) <= 2f)
+                {
+                    targetHouse.UpdateScore(-1); //decrement house score
+
+                    //spawn blob and parent to agent
+                    GameObject blob = Instantiate(blobPrefab, transform);
+                    blob.GetComponent<Rigidbody>().isKinematic = true;
+                    blob.transform.localPosition = Vector3.up;
+                    holdingBlob = true;
+                    blob.GetComponent<Blob>().GrabBlob(gameObject);
+                    blobToGrab = blob.transform;
+
+                    //update destination and state to return with blob
+                    agent.destination = home.position;
+                    State = BehaviorState.Return;
+                }
+                break;
             case BehaviorState.Return:
                 if(Vector3.Distance(agent.nextPosition, home.position) <= 1f)
                 {
@@ -63,10 +96,25 @@ public class RetrievalAgent : MonoBehaviour
 
     private void Search()
     {
+        if(searchCount > 5)
+        {
+            foreach(HouseSpawner house in enemyHouses)
+            {
+                if(house.score <= 0) continue;
+
+                targetHouse = house;
+                agent.destination = house.homePos.position;
+                State = BehaviorState.Steal;
+            }
+        }
+
         if(searchCooldown <= 0f)
         {
             //reset search cooldown
             searchCooldown = searchRate;
+
+            //increment search count
+            searchCount++;
 
             //set new search pos
             Vector2 dir = Random.insideUnitCircle * Random.Range(0, searchRange);
@@ -103,6 +151,7 @@ public class RetrievalAgent : MonoBehaviour
             //ignore blobs being held by someone else
             if(other.GetComponent<Blob>().agentHolding != null) return;
 
+            searchCount = 0; //reset search count
             blobToGrab = other.transform;
             State = BehaviorState.Grab;
         }
