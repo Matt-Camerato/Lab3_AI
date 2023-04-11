@@ -45,7 +45,7 @@ public class RetrievalAgent : MonoBehaviour
                 Grab();
                 break;
             case BehaviorState.Return:
-                if(Vector3.Distance(agent.nextPosition, home.position) <= 1f)
+                if(Vector3.Distance(transform.position, home.position) <= 1f)
                 {
                     if(blobToGrab != null)
                     {
@@ -69,7 +69,7 @@ public class RetrievalAgent : MonoBehaviour
             searchCooldown = searchRate;
 
             //set new search pos
-            Vector2 dir = Random.insideUnitCircle * Random.Range(0, searchRange);
+            Vector2 dir = Random.insideUnitCircle * Random.Range(searchRangeMinMax.x, searchRangeMinMax.y);
             agent.destination = transform.position + new Vector3(dir.x, 0, dir.y);
         }
         else searchCooldown -= Time.deltaTime;
