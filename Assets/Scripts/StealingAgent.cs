@@ -19,9 +19,17 @@ public class StealingAgent : MonoBehaviour
 
     [Header("Search Settings")]
     public Transform home;
-    [SerializeField] private float searchRange;
+    [SerializeField] private Vector2 searchRangeMinMax;
     [SerializeField] private float searchRate;
     [SerializeField] private float searchRadius;
+
+    [Header("State Settings")]
+    [SerializeField] private MeshRenderer stateIndicator;
+    [SerializeField] private Material leaveMaterial;
+    [SerializeField] private Material searchMaterial;
+    [SerializeField] private Material grabMaterial;
+    [SerializeField] private Material stealMaterial;
+    [SerializeField] private Material returnMaterial;
 
     private NavMeshAgent agent;
     private float searchCooldown = 0f;
@@ -35,6 +43,9 @@ public class StealingAgent : MonoBehaviour
 
         //get random destination outside of home area
         agent.destination = new Vector3(Random.Range(-15f, 15f), 1f, Random.Range(-15f, 15f));
+
+        //set initial indicator material
+        stateIndicator.material = leaveMaterial;
     }
 
     private void Update()
@@ -42,7 +53,11 @@ public class StealingAgent : MonoBehaviour
         switch(State)
         {
             case BehaviorState.Leave:
-                if(Vector3.Distance(agent.nextPosition, agent.destination) <= 2f) State = BehaviorState.Search;
+                if(Vector3.Distance(agent.nextPosition, agent.destination) <= 2f)
+                {
+                    stateIndicator.material = searchMaterial;
+                    State = BehaviorState.Search;
+                }
                 break;
             case BehaviorState.Search: 
                 Search();
@@ -56,6 +71,7 @@ public class StealingAgent : MonoBehaviour
                 {
                     //update state to search for more blobs
                     agent.destination = new Vector3(Random.Range(-15f, 15f), 1f, Random.Range(-15f, 15f));
+                    stateIndicator.material = leaveMaterial;
                     State = BehaviorState.Leave;
                 }
 
@@ -74,6 +90,7 @@ public class StealingAgent : MonoBehaviour
 
                     //update destination and state to return with blob
                     agent.destination = home.position;
+                    stateIndicator.material = returnMaterial;
                     State = BehaviorState.Return;
                 }
                 break;
@@ -88,6 +105,7 @@ public class StealingAgent : MonoBehaviour
 
                     //update state to search for more blobs
                     agent.destination = new Vector3(Random.Range(-15f, 15f), 1f, Random.Range(-15f, 15f));
+                    stateIndicator.material = leaveMaterial;
                     State = BehaviorState.Leave;
                 }
                 break;
@@ -104,6 +122,7 @@ public class StealingAgent : MonoBehaviour
 
                 targetHouse = house;
                 agent.destination = house.homePos.position;
+                stateIndicator.material = stealMaterial;
                 State = BehaviorState.Steal;
             }
         }
@@ -117,7 +136,7 @@ public class StealingAgent : MonoBehaviour
             searchCount++;
 
             //set new search pos
-            Vector2 dir = Random.insideUnitCircle * Random.Range(0, searchRange);
+            Vector2 dir = Random.insideUnitCircle * Random.Range(searchRangeMinMax.x, searchRangeMinMax.y);
             agent.destination = transform.position + new Vector3(dir.x, 0, dir.y);
         }
         else searchCooldown -= Time.deltaTime;
@@ -126,6 +145,17 @@ public class StealingAgent : MonoBehaviour
     private void Grab()
     {
         agent.destination = blobToGrab.position;
+
+        //make sure blob isn't held by another agent
+        if(blobToGrab.GetComponent<Blob>().agentHolding != null)
+        {
+            //update state to search for more blobs
+            agent.destination = new Vector3(Random.Range(-15f, 15f), 1f, Random.Range(-15f, 15f));
+            stateIndicator.material = leaveMaterial;
+            State = BehaviorState.Leave;
+        }
+
+        //check if close enough to grab blob and return with it
         if(Vector3.Distance(transform.position, blobToGrab.position) <= 1f)
         {
             //grab blob and place on head
@@ -137,6 +167,7 @@ public class StealingAgent : MonoBehaviour
 
             //update destination and state to return with blob
             agent.destination = home.position;
+            stateIndicator.material = returnMaterial;
             State = BehaviorState.Return;
         }
     }
@@ -153,6 +184,7 @@ public class StealingAgent : MonoBehaviour
 
             searchCount = 0; //reset search count
             blobToGrab = other.transform;
+            stateIndicator.material = grabMaterial;
             State = BehaviorState.Grab;
         }
     }
