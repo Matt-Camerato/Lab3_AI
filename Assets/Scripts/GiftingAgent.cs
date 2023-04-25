@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class StealingAgent : MonoBehaviour
+public class GiftingAgent : MonoBehaviour
 {
-    public enum BehaviorState { Leave, Search, Grab, Steal, Return };
+    public enum BehaviorState { Leave, Search, Grab, Steal, Gift, Return };
 
     public BehaviorState State = BehaviorState.Leave;
 
@@ -16,6 +16,7 @@ public class StealingAgent : MonoBehaviour
     public List<HouseSpawner> enemyHouses = new List<HouseSpawner>();
     [SerializeField] private GameObject blobPrefab;
     private HouseSpawner targetHouse = null;
+    private HouseSpawner giftingHouse = null;
 
     [Header("Search Settings")]
     public Transform home;
@@ -28,6 +29,7 @@ public class StealingAgent : MonoBehaviour
     [SerializeField] private Material searchMaterial;
     [SerializeField] private Material grabMaterial;
     [SerializeField] private Material stealMaterial;
+    [SerializeField] private Material giftMaterial;
     [SerializeField] private Material returnMaterial;
 
     private NavMeshAgent agent;
@@ -87,10 +89,25 @@ public class StealingAgent : MonoBehaviour
                     blob.GetComponent<Blob>().GrabBlob(gameObject);
                     blobToGrab = blob.transform;
 
-                    //update destination and state to return with blob
-                    agent.destination = home.position;
-                    stateIndicator.material = returnMaterial;
-                    State = BehaviorState.Return;
+                    //determine whether to gift the blob or return it
+                    GiftOrReturn();
+                }
+                break;
+            case BehaviorState.Gift:
+                if(Vector3.Distance(agent.nextPosition, agent.destination) <= 2f)
+                {
+                    if(blobToGrab != null)
+                    {
+                        Destroy(blobToGrab.gameObject);
+                        blobToGrab = null;
+                        holdingBlob = false;
+                        giftingHouse.UpdateScore(1);
+                    }
+
+                    //update state to search for more blobs
+                    agent.destination = new Vector3(Random.Range(-15f, 15f), 1f, Random.Range(-15f, 15f));
+                    stateIndicator.material = leaveMaterial;
+                    State = BehaviorState.Leave;
                 }
                 break;
             case BehaviorState.Return:
@@ -179,7 +196,39 @@ public class StealingAgent : MonoBehaviour
             holdingBlob = true;
             blobToGrab.GetComponent<Blob>().GrabBlob(gameObject);
 
-            //update destination and state to return with blob
+            //determine whether to gift the blob or return it
+            GiftOrReturn();
+        }
+    }
+
+    private void GiftOrReturn()
+    {
+        //set this agents house as the worst house
+        HouseSpawner worstHouse = houseSpawner;
+        int worstScore = houseSpawner.score;
+        
+        //determine if any other house has a worse score
+        foreach(HouseSpawner house in enemyHouses)
+        {
+            if(house == targetHouse) continue; //don't gift back to the house that was just stolen from
+
+            if(house.score >= worstScore) continue;
+
+            worstHouse = house;
+            worstScore = house.score;
+        }
+
+        //if other house has worse score, gift to them
+        if(worstHouse != houseSpawner)
+        {
+            giftingHouse = worstHouse;
+            agent.destination = worstHouse.homePos.position;
+            stateIndicator.material = giftMaterial;
+            State = BehaviorState.Gift;
+        }
+        else
+        {
+            //otherwise return with the blob
             agent.destination = home.position;
             stateIndicator.material = returnMaterial;
             State = BehaviorState.Return;

@@ -16,7 +16,6 @@ public class RetrievalAgent : MonoBehaviour
     public Transform home;
     [SerializeField] private Vector2 searchRangeMinMax;
     [SerializeField] private float searchRate;
-    [SerializeField] private float searchRadius;
 
     [Header("State Settings")]
     [SerializeField] private MeshRenderer stateIndicator;
@@ -59,11 +58,13 @@ public class RetrievalAgent : MonoBehaviour
                 Grab();
                 break;
             case BehaviorState.Return:
-                if(Vector3.Distance(transform.position, home.position) <= 1f)
+                if(Vector3.Distance(transform.position, home.position) <= 2f)
                 {
                     if(blobToGrab != null)
                     {
                         Destroy(blobToGrab.gameObject);
+                        blobToGrab = null;
+                        holdingBlob = false;
                         houseSpawner.UpdateScore(1);
                     }
 

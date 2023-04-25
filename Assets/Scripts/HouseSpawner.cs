@@ -9,6 +9,7 @@ public class HouseSpawner : MonoBehaviour
     [SerializeField] private int population = 3;
     [SerializeField] private float spawnRate = 5f;
     [SerializeField] private bool canSteal = false;
+    [SerializeField] private bool canGift = false;
 
     [Header("References")]
     public Transform homePos;
@@ -19,7 +20,7 @@ public class HouseSpawner : MonoBehaviour
     [SerializeField] private List<HouseSpawner> enemyHouses = new List<HouseSpawner>();
 
     private float cooldown = 0f;
-    private List<GameObject> agents = new List<GameObject>();
+    public List<GameObject> agents = new List<GameObject>();
     public int score = 0;
 
     private void Update()
@@ -42,7 +43,14 @@ public class HouseSpawner : MonoBehaviour
         foreach(MeshRenderer renderer in agentObj.GetComponentsInChildren<MeshRenderer>()) renderer.material = agentMaterial; //set material of agent
         agents.Add(agentObj);
 
-        if(canSteal)
+        if(canGift)
+        {
+            GiftingAgent agent = agentObj.GetComponent<GiftingAgent>();
+            agent.houseSpawner = this;
+            agent.home = homePos;
+            agent.enemyHouses = enemyHouses;
+        }
+        else if(canSteal)
         {
             StealingAgent agent = agentObj.GetComponent<StealingAgent>();
             agent.houseSpawner = this;

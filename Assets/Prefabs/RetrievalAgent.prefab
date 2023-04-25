@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: 156398334097878162}
   m_Layer: 0
   m_Name: RetrievalAgent
-  m_TagString: Untagged
+  m_TagString: RetrievalAgent
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -140,7 +140,6 @@ MonoBehaviour:
   home: {fileID: 0}
   searchRangeMinMax: {x: 5, y: 10}
   searchRate: 5
-  searchRadius: 5
   stateIndicator: {fileID: 3474027233876545873}
   leaveMaterial: {fileID: 2100000, guid: b544cd26a5c1d6043acd21118dcd6dff, type: 2}
   searchMaterial: {fileID: 2100000, guid: b8d1f94aeef485b4d9f1b6b177a9545d, type: 2}

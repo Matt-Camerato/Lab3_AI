@@ -13,12 +13,12 @@ GameObject:
   - component: {fileID: 156398334097878168}
   - component: {fileID: 156398334097878171}
   - component: {fileID: 156398334097878172}
-  - component: {fileID: 7608151266956007150}
+  - component: {fileID: 3753621484335709085}
   - component: {fileID: 156398334097878173}
   - component: {fileID: 156398334097878162}
   m_Layer: 0
-  m_Name: StealingAgent
-  m_TagString: StealingAgent
+  m_Name: GiftingAgent
+  m_TagString: GiftingAgent
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -123,7 +123,7 @@ NavMeshAgent:
   m_BaseOffset: 1
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &7608151266956007150
+--- !u!114 &3753621484335709085
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -132,7 +132,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 156398334097878170}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 123ee0fbc36b4bd4293577d03569b379, type: 3}
+  m_Script: {fileID: 11500000, guid: 5ea081278417b1c4096f878a10a977d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   State: 0
@@ -140,13 +140,14 @@ MonoBehaviour:
   enemyHouses: []
   blobPrefab: {fileID: 1484367854969774713, guid: 01a2f177dc7f5fd4ca36958c00fd5dab, type: 3}
   home: {fileID: 0}
-  searchRangeMinMax: {x: 3, y: 5}
+  searchRangeMinMax: {x: 6, y: 8}
   searchRate: 5
   stateIndicator: {fileID: 4222655708985089782}
   leaveMaterial: {fileID: 2100000, guid: b544cd26a5c1d6043acd21118dcd6dff, type: 2}
   searchMaterial: {fileID: 2100000, guid: b8d1f94aeef485b4d9f1b6b177a9545d, type: 2}
   grabMaterial: {fileID: 2100000, guid: 23b1754241b9b974b85800735a77d23c, type: 2}
   stealMaterial: {fileID: 2100000, guid: a5f942fb1a55a3b469f72084ff4ef60c, type: 2}
+  giftMaterial: {fileID: 2100000, guid: 2e1145907837bb94db1db01502c463e4, type: 2}
   returnMaterial: {fileID: 2100000, guid: 061db62005503ad43a8d58deda118c9c, type: 2}
 --- !u!54 &156398334097878173
 Rigidbody:
